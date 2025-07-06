@@ -1,0 +1,34 @@
+name: Build DotaScanner DLL
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Install OpenSSL
+      run: |
+        choco install openssl -y
+        echo "C:\Program Files\OpenSSL-Win64\bin" >> $GITHUB_PATH
+        
+    - name: Set up MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+      
+    - name: Build DLL
+      run: |
+        cl.exe /nologo /LD /O2 /EHsc /I "C:\Program Files\OpenSSL-Win64\include" DotaScanner.cpp /link /LIBPATH:"C:\Program Files\OpenSSL-Win64\lib" libcrypto.lib advapi32.lib psapi.lib
+        if ($LastExitCode -ne 0) { exit 1 }
+        
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: DotaScanner
+        path: DotaScanner.dll
